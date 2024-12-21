@@ -72,7 +72,10 @@ struct ModelInfo {
     
     /// Suffix of the archive containing the SPLIT_EINSUM_V2 attention variant. Usually something like "split_einsum_v2_compiled"
     let splitAttentionV2Suffix: String
-    
+
+    /// Whether the archive contains ANE optimized models
+    let supportsNeuralEngine: Bool
+
     /// Whether the archive contains the VAE Encoder (for image to image tasks). Not yet in use.
     let supportsEncoder: Bool
     
@@ -85,25 +88,33 @@ struct ModelInfo {
     /// Whether this is a Stable Diffusion XL model
     // TODO: retrieve from remote config
     let isXL: Bool
-    
+
+    /// Whether this is a Stable Diffusion 3 model
+    // TODO: retrieve from remote config
+    let isSD3: Bool
+
     //TODO: refactor all these properties
     init(modelId: String, modelVersion: String,
          originalAttentionSuffix: String = "original_compiled",
          splitAttentionSuffix: String = "split_einsum_compiled",
          splitAttentionV2Suffix: String = "split_einsum_v2_compiled",
+         supportsNeuralEngine: Bool = true,
          supportsEncoder: Bool = false,
          supportsAttentionV2: Bool = false,
          quantized: Bool = false,
-         isXL: Bool = false) {
+         isXL: Bool = false,
+         isSD3: Bool = false) {
         self.modelId = modelId
         self.modelVersion = modelVersion
         self.originalAttentionSuffix = originalAttentionSuffix
         self.splitAttentionSuffix = splitAttentionSuffix
         self.splitAttentionV2Suffix = splitAttentionV2Suffix
+        self.supportsNeuralEngine = supportsNeuralEngine
         self.supportsEncoder = supportsEncoder
         self.supportsAttentionV2 = supportsAttentionV2
         self.quantized = quantized
         self.isXL = isXL
+        self.isSD3 = isSD3
     }
 }
 
@@ -146,6 +157,7 @@ extension ModelInfo {
     var reduceMemory: Bool {
         // Enable on iOS devices, except when using quantization
         if runningOnMac { return false }
+        if isXL { return !deviceHas8GBOrMore }
         return !(quantized && deviceHas6GBOrMore)
     }
 }
@@ -212,22 +224,55 @@ extension ModelInfo {
     
     static let xl = ModelInfo(
         modelId: "apple/coreml-stable-diffusion-xl-base",
-        modelVersion: "Stable Diffusion XL base",
+        modelVersion: "SDXL base (1024, macOS)",
         supportsEncoder: true,
         isXL: true
     )
     
+    static let xlWithRefiner = ModelInfo(
+        modelId: "apple/coreml-stable-diffusion-xl-base-with-refiner",
+        modelVersion: "SDXL with refiner (1024, macOS)",
+        supportsEncoder: true,
+        isXL: true
+    )
+
     static let xlmbp = ModelInfo(
         modelId: "apple/coreml-stable-diffusion-mixed-bit-palettization",
-        modelVersion: "Stable Diffusion XL base [4.5 bit]",
+        modelVersion: "SDXL base (1024, macOS) [4.5 bit]",
         supportsEncoder: true,
         quantized: true,
         isXL: true
     )
     
+    static let xlmbpChunked = ModelInfo(
+        modelId: "apple/coreml-stable-diffusion-xl-base-ios",
+        modelVersion: "SDXL base (768, iOS) [4 bit]",
+        supportsEncoder: false,
+        quantized: true,
+        isXL: true
+    )
+
+    static let sd3 = ModelInfo(
+        modelId: "argmaxinc/coreml-stable-diffusion-3-medium",
+        modelVersion: "SD3 medium (512, macOS)",
+        supportsNeuralEngine: false, // TODO: support SD3 on ANE
+        supportsEncoder: false,
+        quantized: false,
+        isSD3: true
+    )
+
+    static let sd3highres = ModelInfo(
+        modelId: "argmaxinc/coreml-stable-diffusion-3-medium-1024-t5",
+        modelVersion: "SD3 medium (1024, T5, macOS)",
+        supportsNeuralEngine: false, // TODO: support SD3 on ANE
+        supportsEncoder: false,
+        quantized: false,
+        isSD3: true
+    )
+
     static let MODELS: [ModelInfo] = {
         if deviceSupportsQuantization {
-            return [
+            var models = [
                 ModelInfo.v14Base,
                 ModelInfo.v14Palettized,
                 ModelInfo.v15Base,
@@ -235,10 +280,20 @@ extension ModelInfo {
                 ModelInfo.v2Base,
                 ModelInfo.v2Palettized,
                 ModelInfo.v21Base,
-                ModelInfo.v21Palettized,
-                ModelInfo.xl,
-                ModelInfo.xlmbp
+                ModelInfo.v21Palettized
             ]
+            if runningOnMac {
+                models.append(contentsOf: [
+                    ModelInfo.xl,
+                    ModelInfo.xlWithRefiner,
+                    ModelInfo.xlmbp,
+                    ModelInfo.sd3,
+                    ModelInfo.sd3highres,
+                ])
+            } else {
+                models.append(ModelInfo.xlmbpChunked)
+            }
+            return models
         } else {
             return [
                 ModelInfo.v14Base,
