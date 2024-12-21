@@ -16,6 +16,7 @@ class CoreMlStableDiffusionPipelineGenerateParams
     super.guidanceScale = 7.5,
     this.disableSafety = false,
     this.cancelToken,
+    super.startingImage,
   });
   final CoreMlStableDiffusionScheduler scheduler;
   final bool disableSafety;

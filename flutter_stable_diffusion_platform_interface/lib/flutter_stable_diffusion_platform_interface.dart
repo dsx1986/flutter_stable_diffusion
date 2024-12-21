@@ -19,6 +19,7 @@ class PlatformStableDiffusionPipelineGenerateParams {
     required this.stepCount,
     this.seed,
     this.guidanceScale = 7.5,
+    this.startingImage = null,
   });
 
   final String prompt;
@@ -26,6 +27,8 @@ class PlatformStableDiffusionPipelineGenerateParams {
   final int stepCount;
   final int? seed;
   final double guidanceScale;
+
+  final List<int>? startingImage;
 }
 
 /// result for [PlatformStableDiffusionPipeline.generate]

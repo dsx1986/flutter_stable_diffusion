@@ -43,6 +43,7 @@ class CoreMlStableDiffusionPipeline implements PlatformStableDiffusionPipeline {
         "prompt": params.prompt,
         "negativePrompt": params.negativePrompt,
         "stepCount": params.stepCount,
+        "startingImage": params.startingImage,
         if (params is CoreMlStableDiffusionPipelineGenerateParams) ...{
           "scheduler": params.scheduler.index,
           "seed": params.seed,
