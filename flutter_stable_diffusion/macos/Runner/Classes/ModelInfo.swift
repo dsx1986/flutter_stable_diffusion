@@ -8,6 +8,7 @@
 //
 
 import CoreML
+import Foundation
 
 let runningOnMac = true
 let deviceHas6GBOrMore = true

@@ -35,6 +35,7 @@ struct FlutterStableDiffusionPipelineGenerateParams {
         let seed = args["seed"] as? UInt32
         let guidanceScale = args["guidanceScale"] as? Float
         let disableSafety = args["disableSafety"] as? Bool
+        let startingImage: List<Int>? = args["startingImage"] as? List<Int>
         
         let cancelToken = args["cancelToken"] as? CoreMlStableDiffusionGenerateCancelToken
         self.prompt = prompt
@@ -45,6 +46,7 @@ struct FlutterStableDiffusionPipelineGenerateParams {
         self.guidanceScale = guidanceScale ?? 7.5
         self.disableSafety = disableSafety ?? false
         self.cancelToken = cancelToken
+        self.startingImage = startingImage
     }
     let prompt : String
     let negativePrompt : String
@@ -54,6 +56,7 @@ struct FlutterStableDiffusionPipelineGenerateParams {
     let guidanceScale : Float
     let disableSafety : Bool
     let cancelToken : CoreMlStableDiffusionGenerateCancelToken?
+    let startingImage : List<Int>?
 }
 
 @objc(CoreMlStableDiffusionPipeline)
@@ -110,6 +113,7 @@ class CoreMlStableDiffusionPipeline : NSObject, FoundationPlatformObject {
                     config.disableSafety = params.disableSafety
                     config.schedulerType = params.scheduler
                     config.useDenoisedIntermediates = true
+                    config.startingImage = params.startingImage
                     let images = try self.pipeline.generateImages(configuration: config) { progress in
                         let currentImages = progress.currentImages.map({ item in
                             if let image = item {

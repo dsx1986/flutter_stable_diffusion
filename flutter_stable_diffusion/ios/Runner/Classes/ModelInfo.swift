@@ -7,6 +7,8 @@
 //
 
 import CoreML
+import Foundation
+
 
 #if canImport(MLCompute)
 import MLCompute
